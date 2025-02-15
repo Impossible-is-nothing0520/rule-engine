@@ -1,0 +1,50 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: rule-engine
+  
+  # 允许循环依赖
+  main:
+    allow-circular-references: true
+  
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/rule_engine?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+  
+  # JPA配置
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Swagger配置
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+# 日志配置
+logging:
+  level:
+    com.example.rule: DEBUG
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+
+# 规则引擎配置
+rule-engine:
+  # 规则执行超时时间（毫秒）
+  execution-timeout: 5000
+  # 规则缓存大小
+  cache-size: 1000
+  # 是否启用规则版本控制
+  version-control-enabled: true
+  # 是否启用执行日志
+  execution-log-enabled: true 

@@ -1,0 +1,246 @@
+/* 全局样式 */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+#app {
+    height: 100%;
+}
+
+/* 侧边栏样式 */
+.el-aside {
+    background-color: #304156;
+    color: #fff;
+    height: 100vh;
+}
+
+.el-menu {
+    border-right: none;
+}
+
+.el-menu-item {
+    color: #bfcbd9;
+}
+
+.el-menu-item:hover {
+    background-color: #263445;
+}
+
+.el-menu-item.is-active {
+    background-color: #1890ff;
+    color: #fff;
+}
+
+/* 头部样式 */
+.el-header {
+    background-color: #fff;
+    color: #333;
+    line-height: 60px;
+    box-shadow: 0 1px 4px rgba(0,21,41,.08);
+    position: relative;
+    z-index: 1;
+}
+
+.el-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+}
+
+/* 主要内容区样式 */
+.el-main {
+    background-color: #f0f2f5;
+    padding: 20px;
+}
+
+.content-section {
+    margin-bottom: 20px;
+}
+
+/* 卡片样式 */
+.el-card {
+    margin-bottom: 20px;
+}
+
+.el-card__header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #ebeef5;
+    box-sizing: border-box;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 表格样式 */
+.el-table {
+    margin-top: 15px;
+}
+
+.el-table th {
+    background-color: #f5f7fa;
+}
+
+/* 表单样式 */
+.el-form-item {
+    margin-bottom: 22px;
+}
+
+.el-form-item__label {
+    font-weight: 500;
+}
+
+/* 上传区域样式 */
+.upload-demo {
+    text-align: center;
+    padding: 20px;
+}
+
+.el-upload-dragger {
+    width: 100%;
+}
+
+.el-upload__tip {
+    color: #909399;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+/* 对话框样式 */
+.el-dialog__body {
+    padding: 30px 20px;
+}
+
+.dialog-footer {
+    text-align: right;
+    padding-top: 20px;
+}
+
+/* 按钮组样式 */
+.el-button-group {
+    margin-right: 10px;
+}
+
+.el-button-group .el-button {
+    margin-left: -1px;
+}
+
+/* 图表容器样式 */
+.chart-container {
+    height: 300px;
+    margin-top: 20px;
+}
+
+/* 测试结果样式 */
+.test-result {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    font-family: monospace;
+    white-space: pre-wrap;
+}
+
+/* 参数表单样式 */
+.parameter-form {
+    margin-top: 20px;
+    border-top: 1px solid #ebeef5;
+    padding-top: 20px;
+}
+
+/* 空状态样式 */
+.el-empty {
+    padding: 40px 0;
+}
+
+/* 选择器样式 */
+.el-select {
+    width: 100%;
+}
+
+/* 标签样式 */
+.el-tag {
+    margin-right: 8px;
+}
+
+/* 开关样式 */
+.el-switch {
+    margin: 0 8px;
+}
+
+/* 分页样式 */
+.el-pagination {
+    margin-top: 20px;
+    text-align: right;
+}
+
+/* 图标样式 */
+.el-icon {
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+/* 提示文本样式 */
+.tip-text {
+    color: #909399;
+    font-size: 12px;
+    line-height: 1.5;
+    margin-top: 4px;
+}
+
+/* 必填项样式 */
+.required-field .el-form-item__label:before {
+    content: '*';
+    color: #f56c6c;
+    margin-right: 4px;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+    .el-aside {
+        width: 64px !important;
+    }
+
+    .el-menu--collapse {
+        width: 64px;
+    }
+
+    .el-menu-item span {
+        display: none;
+    }
+}
+
+/* 动画效果 */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+} 

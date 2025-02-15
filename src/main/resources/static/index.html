@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>规则引擎管理系统</title>
+    <link rel="stylesheet" href="//unpkg.com/element-plus/dist/index.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <el-container>
+            <!-- 侧边栏 -->
+            <el-aside width="200px">
+                <el-menu
+                    :default-active="activeMenu"
+                    class="el-menu-vertical"
+                    @select="handleMenuSelect">
+                    <el-menu-item index="rules">
+                        <el-icon><Document /></el-icon>
+                        <span>规则管理</span>
+                    </el-menu-item>
+                    <el-menu-item index="templates">
+                        <el-icon><Files /></el-icon>
+                        <span>规则模板</span>
+                    </el-menu-item>
+                    <el-menu-item index="import-export">
+                        <el-icon><Upload /></el-icon>
+                        <span>导入导出</span>
+                    </el-menu-item>
+                    <el-menu-item index="monitoring">
+                        <el-icon><Monitor /></el-icon>
+                        <span>执行监控</span>
+                    </el-menu-item>
+                    <el-menu-item index="test">
+                        <el-icon><Operation /></el-icon>
+                        <span>规则测试</span>
+                    </el-menu-item>
+                </el-menu>
+            </el-aside>
+
+            <!-- 主要内容区 -->
+            <el-container>
+                <el-header>
+                    <h2>规则引擎管理系统</h2>
+                </el-header>
+                
+                <el-main>
+                    <!-- 规则管理 -->
+                    <div v-if="activeMenu === 'rules'" class="content-section">
+                        <el-button type="primary" @click="showCreateRuleDialog">新建规则</el-button>
+                        <el-table :data="rules" style="width: 100%; margin-top: 20px;">
+                            <el-table-column prop="code" label="规则编码" width="180" />
+                            <el-table-column prop="name" label="规则名称" width="180" />
+                            <el-table-column prop="description" label="描述" />
+                            <el-table-column prop="priority" label="优先级" width="100" />
+                            <el-table-column prop="status" label="状态" width="100">
+                                <template #default="scope">
+                                    <el-tag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'">
+                                        {{ scope.row.status === 'ENABLED' ? '启用' : '禁用' }}
+                                    </el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="操作" width="400">
+                                <template #default="scope">
+                                    <el-button-group>
+                                        <el-button type="primary" @click="editRule(scope.row)">编辑</el-button>
+                                        <el-button 
+                                            type="success" 
+                                            @click="toggleRuleStatus(scope.row)" 
+                                            :disabled="scope.row.status === 'ENABLED'">启用</el-button>
+                                        <el-button 
+                                            type="warning" 
+                                            @click="toggleRuleStatus(scope.row)" 
+                                            :disabled="scope.row.status === 'DISABLED'">禁用</el-button>
+                                        <el-button type="info" @click="showVersionHistory(scope.row)">版本历史</el-button>
+                                        <el-button type="danger" @click="deleteRule(scope.row)">删除</el-button>
+                                    </el-button-group>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+
+                    <!-- 规则模板 -->
+                    <div v-if="activeMenu === 'templates'" class="content-section">
+                        <el-button type="primary" @click="showCreateTemplateDialog">新建模板</el-button>
+                        <el-table :data="templates" style="width: 100%; margin-top: 20px;">
+                            <el-table-column prop="code" label="模板编码" width="180" />
+                            <el-table-column prop="name" label="模板名称" width="180" />
+                            <el-table-column prop="description" label="描述" />
+                            <el-table-column label="操作" width="300">
+                                <template #default="scope">
+                                    <el-button-group>
+                                        <el-button type="primary" @click="editTemplate(scope.row)">编辑</el-button>
+                                        <el-button type="success" @click="showCreateFromTemplateDialog(scope.row)">创建规则</el-button>
+                                        <el-button type="danger" @click="deleteTemplate(scope.row)">删除</el-button>
+                                    </el-button-group>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+
+                    <!-- 导入导出 -->
+                    <div v-if="activeMenu === 'import-export'" class="content-section">
+                        <el-row :gutter="20">
+                            <el-col :span="12">
+                                <el-card>
+                                    <template #header>
+                                        <div class="card-header">
+                                            <span>导入规则</span>
+                                        </div>
+                                    </template>
+                                    <el-upload
+                                        class="upload-demo"
+                                        drag
+                                        action="/api/rule-import-export/import/excel"
+                                        :headers="{'Content-Type': 'multipart/form-data'}"
+                                        :on-success="() => { ElMessage.success('导入成功'); loadRules(); }"
+                                        :on-error="() => ElMessage.error('导入失败')"
+                                        accept=".xlsx,.xls,.json">
+                                        <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                                        <div class="el-upload__text">
+                                            将文件拖到此处，或<em>点击上传</em>
+                                        </div>
+                                        <template #tip>
+                                            <div class="el-upload__tip">
+                                                支持 Excel (.xlsx, .xls) 和 JSON (.json) 格式文件
+                                            </div>
+                                        </template>
+                                    </el-upload>
+                                </el-card>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-card>
+                                    <template #header>
+                                        <div class="card-header">
+                                            <span>导出规则</span>
+                                        </div>
+                                    </template>
+                                    <el-form :model="exportForm" label-width="120px">
+                                        <el-form-item label="选择规则">
+                                            <el-select
+                                                v-model="exportForm.ruleIds"
+                                                multiple
+                                                placeholder="请选择要导出的规则"
+                                                style="width: 100%">
+                                                <el-option
+                                                    v-for="rule in rules"
+                                                    :key="rule.id"
+                                                    :label="rule.name"
+                                                    :value="rule.id">
+                                                    <span style="float: left">{{ rule.name }}</span>
+                                                    <span style="float: right; color: #8492a6; font-size: 13px">{{ rule.code }}</span>
+                                                </el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                        <el-form-item label="导出格式">
+                                            <el-radio-group v-model="exportForm.format">
+                                                <el-radio label="excel">Excel</el-radio>
+                                                <el-radio label="json">JSON</el-radio>
+                                            </el-radio-group>
+                                        </el-form-item>
+                                        <el-form-item>
+                                            <el-button type="primary" @click="exportRules" :disabled="!exportForm.ruleIds.length">
+                                                导出选中规则
+                                            </el-button>
+                                        </el-form-item>
+                                    </el-form>
+                                </el-card>
+                            </el-col>
+                        </el-row>
+                    </div>
+
+                    <!-- 执行监控 -->
+                    <div v-if="activeMenu === 'monitoring'" class="content-section">
+                        <el-row :gutter="20">
+                            <el-col :span="24">
+                                <el-card>
+                                    <template #header>
+                                        <div class="card-header">
+                                            <span>执行日志</span>
+                                        </div>
+                                    </template>
+                                    <el-table :data="executionLogs" style="width: 100%">
+                                        <el-table-column prop="ruleCode" label="规则编码" width="180" />
+                                        <el-table-column prop="executedAt" label="执行时间" width="180" />
+                                        <el-table-column prop="status" label="状态" width="100">
+                                            <template #default="scope">
+                                                <el-tag :type="scope.row.status === 'SUCCESS' ? 'success' : 'danger'">
+                                                    {{ scope.row.status }}
+                                                </el-tag>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column prop="input" label="输入参数" />
+                                        <el-table-column prop="output" label="输出结果" />
+                                        <el-table-column prop="executionTime" label="执行时间(ms)" width="120" />
+                                        <el-table-column prop="errorMessage" label="错误信息" />
+                                    </el-table>
+                                </el-card>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="20" style="margin-top: 20px;">
+                            <el-col :span="24">
+                                <el-card>
+                                    <template #header>
+                                        <div class="card-header">
+                                            <span>执行统计</span>
+                                        </div>
+                                    </template>
+                                    <el-table :data="Object.entries(executionStats)" style="width: 100%">
+                                        <el-table-column prop="0" label="规则编码" width="180" />
+                                        <el-table-column label="成功率" width="180">
+                                            <template #default="scope">
+                                                {{ scope.row[1].successRate.toFixed(2) }}%
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column label="平均执行时间(ms)">
+                                            <template #default="scope">
+                                                {{ scope.row[1].avgExecutionTime.toFixed(2) }}
+                                            </template>
+                                        </el-table-column>
+                                    </el-table>
+                                </el-card>
+                            </el-col>
+                        </el-row>
+                    </div>
+
+                    <!-- 规则测试 -->
+                    <div v-if="activeMenu === 'test'" class="content-section">
+                        <el-row :gutter="20">
+                            <el-col :span="12">
+                                <el-card>
+                                    <template #header>
+                                        <div class="card-header">
+                                            <span>测试规则</span>
+                                        </div>
+                                    </template>
+                                    <el-form :model="testForm" label-width="120px">
+                                        <el-form-item label="选择规则">
+                                            <el-select v-model="testForm.ruleId" placeholder="请选择规则">
+                                                <el-option
+                                                    v-for="rule in rules"
+                                                    :key="rule.id"
+                                                    :label="rule.name"
+                                                    :value="rule.id">
+                                                    <span style="float: left">{{ rule.name }}</span>
+                                                    <span style="float: right; color: #8492a6; font-size: 13px">{{ rule.code }}</span>
+                                                </el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                        <el-form-item label="输入参数">
+                                            <el-input
+                                                type="textarea"
+                                                v-model="testForm.params"
+                                                :rows="10"
+                                                placeholder="请输入JSON格式的参数，例如：&#10;{&#10;  &quot;amount&quot;: 1000,&#10;  &quot;userType&quot;: &quot;VIP&quot;&#10;}"
+                                            />
+                                        </el-form-item>
+                                        <el-form-item>
+                                            <el-button type="primary" @click="executeRule">执行规则</el-button>
+                                        </el-form-item>
+                                    </el-form>
+                                </el-card>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-card>
+                                    <template #header>
+                                        <div class="card-header">
+                                            <span>执行结果</span>
+                                            <el-button type="primary" link @click="clearTestResult">清空</el-button>
+                                        </div>
+                                    </template>
+                                    <div v-if="testResult" class="test-result">
+                                        <pre>{{ JSON.stringify(testResult, null, 2) }}</pre>
+                                    </div>
+                                    <el-empty v-else description="暂无执行结果" />
+                                </el-card>
+                            </el-col>
+                        </el-row>
+                    </div>
+                </el-main>
+            </el-container>
+        </el-container>
+
+        <!-- 创建/编辑规则对话框 -->
+        <el-dialog
+            v-model="ruleDialog.visible"
+            :title="ruleDialog.type === 'create' ? '新建规则' : '编辑规则'"
+            width="60%">
+            <el-form :model="ruleDialog.form" label-width="120px">
+                <el-form-item label="规则编码" required>
+                    <el-input v-model="ruleDialog.form.code" :disabled="ruleDialog.type === 'edit'" />
+                </el-form-item>
+                <el-form-item label="规则名称" required>
+                    <el-input v-model="ruleDialog.form.name" />
+                </el-form-item>
+                <el-form-item label="规则描述">
+                    <el-input type="textarea" v-model="ruleDialog.form.description" />
+                </el-form-item>
+                <el-form-item label="条件" required>
+                    <el-input type="textarea" v-model="ruleDialog.form.condition" rows="4" />
+                    <div class="tip-text">使用MVEL表达式，例如：userType == 'VIP' && amount >= 1000</div>
+                </el-form-item>
+                <el-form-item label="动作" required>
+                    <el-input type="textarea" v-model="ruleDialog.form.action" rows="4" />
+                    <div class="tip-text">使用MVEL表达式，例如：amount * 0.8</div>
+                </el-form-item>
+                <el-form-item label="优先级">
+                    <el-input-number v-model="ruleDialog.form.priority" :min="1" :max="100" />
+                    <div class="tip-text">数字越小优先级越高</div>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="ruleDialog.visible = false">取消</el-button>
+                    <el-button type="primary" @click="saveRule">确定</el-button>
+                </span>
+            </template>
+        </el-dialog>
+
+        <!-- 创建/编辑模板对话框 -->
+        <el-dialog
+            v-model="templateDialog.visible"
+            :title="templateDialog.type === 'create' ? '新建模板' : '编辑模板'"
+            width="60%">
+            <el-form :model="templateDialog.form" label-width="120px">
+                <el-form-item label="模板编码" required>
+                    <el-input v-model="templateDialog.form.code" :disabled="templateDialog.type === 'edit'" />
+                </el-form-item>
+                <el-form-item label="模板名称" required>
+                    <el-input v-model="templateDialog.form.name" />
+                </el-form-item>
+                <el-form-item label="模板描述">
+                    <el-input type="textarea" v-model="templateDialog.form.description" />
+                </el-form-item>
+                <el-form-item label="条件模板" required>
+                    <el-input type="textarea" v-model="templateDialog.form.conditionTemplate" rows="4" />
+                    <div class="tip-text">使用${paramName}表示参数，例如：userType == '${userType}' && amount >= ${minAmount}</div>
+                </el-form-item>
+                <el-form-item label="动作模板" required>
+                    <el-input type="textarea" v-model="templateDialog.form.actionTemplate" rows="4" />
+                    <div class="tip-text">使用${paramName}表示参数，例如：amount * ${discountRate}</div>
+                </el-form-item>
+                <el-form-item label="参数定义">
+                    <el-table :data="JSON.parse(templateDialog.form.parameterDefinitions)" style="width: 100%">
+                        <el-table-column label="参数名" width="180">
+                            <template #default="scope">
+                                <el-input v-model="scope.row.name" placeholder="参数名" />
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="类型" width="120">
+                            <template #default="scope">
+                                <el-select v-model="scope.row.type" placeholder="类型">
+                                    <el-option label="字符串" value="string" />
+                                    <el-option label="数字" value="number" />
+                                    <el-option label="布尔" value="boolean" />
+                                </el-select>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="描述">
+                            <template #default="scope">
+                                <el-input v-model="scope.row.description" placeholder="参数描述" />
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="必填" width="80">
+                            <template #default="scope">
+                                <el-switch v-model="scope.row.required" />
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="80">
+                            <template #default="scope">
+                                <el-button type="danger" @click="removeParameter(scope.$index)">删除</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <el-button type="primary" @click="addParameter" style="margin-top: 10px;">添加参数</el-button>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="templateDialog.visible = false">取消</el-button>
+                    <el-button type="primary" @click="saveTemplate">确定</el-button>
+                </span>
+            </template>
+        </el-dialog>
+
+        <!-- 从模板创建规则对话框 -->
+        <el-dialog
+            v-model="createFromTemplateDialog.visible"
+            title="从模板创建规则"
+            width="50%">
+            <el-form :model="createFromTemplateDialog.form" label-width="120px">
+                <el-form-item label="规则编码" required>
+                    <el-input v-model="createFromTemplateDialog.form.code" />
+                </el-form-item>
+                <el-form-item label="规则名称" required>
+                    <el-input v-model="createFromTemplateDialog.form.name" />
+                </el-form-item>
+                <template v-if="createFromTemplateDialog.template">
+                    <el-form-item
+                        v-for="param in JSON.parse(createFromTemplateDialog.template.parameterDefinitions)"
+                        :key="param.name"
+                        :label="param.name"
+                        :required="param.required">
+                        <el-input
+                            v-if="param.type === 'string'"
+                            v-model="createFromTemplateDialog.form.parameters[param.name]"
+                            :placeholder="param.description" />
+                        <el-input-number
+                            v-else-if="param.type === 'number'"
+                            v-model="createFromTemplateDialog.form.parameters[param.name]"
+                            :placeholder="param.description" />
+                        <el-switch
+                            v-else-if="param.type === 'boolean'"
+                            v-model="createFromTemplateDialog.form.parameters[param.name]" />
+                    </el-form-item>
+                </template>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="createFromTemplateDialog.visible = false">取消</el-button>
+                    <el-button type="primary" @click="saveRuleFromTemplate">确定</el-button>
+                </span>
+            </template>
+        </el-dialog>
+
+        <!-- 版本历史对话框 -->
+        <el-dialog
+            v-model="versionDialog.visible"
+            title="版本历史"
+            width="70%">
+            <el-table :data="versionDialog.versions" style="width: 100%">
+                <el-table-column prop="version" label="版本号" width="100" />
+                <el-table-column prop="createTime" label="创建时间" width="180" />
+                <el-table-column prop="creator" label="创建人" width="120" />
+                <el-table-column prop="remark" label="备注" />
+                <el-table-column label="操作" width="120">
+                    <template #default="scope">
+                        <el-button type="primary" @click="rollbackToVersion(scope.row)">回滚</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-dialog>
+    </div>
+
+    <script src="//unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="//unpkg.com/element-plus"></script>
+    <script src="//unpkg.com/@element-plus/icons-vue"></script>
+    <script src="js/app.js"></script>
+</body>
+</html> 
