@@ -58,6 +58,7 @@ public class MVELRuleEngine implements RuleEngine {
             boolean matches = MVEL.executeExpression(compiledCondition, context.getParams(), Boolean.class);
 
             if (!matches) {
+
                 log.setStatus(RuleExecutionLog.ExecutionStatus.SUCCESS)
                     .setOutput("条件不匹配");
                 log.setExecutionTime(System.currentTimeMillis() - startTime);
